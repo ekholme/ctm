@@ -1,0 +1,3 @@
+# Preface {.unnumbered}
+
+This book contains notes and code as I work through the Coding the Matrix book.

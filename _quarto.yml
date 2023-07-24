@@ -1,0 +1,19 @@
+project:
+  type: book
+
+book:
+  title: "ctm"
+  author: "Eric Ekholm"
+  date: "7/24/2023"
+  chapters:
+    - index.qmd
+    - ch1_field.qmd
+
+format:
+  html:
+    theme: cosmo
+  pdf:
+    documentclass: scrreprt
+
+
+
