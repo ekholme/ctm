@@ -109,4 +109,157 @@ x2 = z1 - z2
 x1 == x2
 ```
 
-*RESUME AT COMPLEX NUMBERS AS ARROWS*
+We can also multiply complex numbers by scalars, which multiplies the real and the imaginary parts (each) by the scalar. This is called *scaling*.
+
+```{julia}
+0.5 * S[1]
+```
+
+### Rotations
+
+To rotate by 180 degrees, we can multiply by -1
+
+```{julia}
+S_180 = -1 .* S
+
+scatter(S);
+scatter!(S_180, color="red")
+```
+
+But what if we want to rotate by 90 degrees? For this to be true, we want an arbitrary point at *(x, y)* to be at *(-y, x)*
+
+Given that the complex number at (x, y) is at x + **i**y, and given that $i^2 = -1$, we can multiply all of our points by **i** to get $ix + i^2y$ which simplifies to $ix - y$.
+
+**Task 1.4.8**
+
+Create a plot that's scaled by 1/2 and rotated by 90 degrees
+
+```{julia}
+a = 0.5im
+
+S₂ = a .* S
+
+scatter(S);
+scatter!(S₂, color="red")
+```
+
+**Rotations within the unit circle**
+
+Using radians rather than degrees can make rotations easier. Recall that the circumference of the unit circle is 2$\pi$, so we can figure out angles mostly using this knowledge. Points in the unit circle can also be represented as complex numbers
+
+**Task 1.4.17**
+
+For n in 1:20, plot the result of the equation $e^(2\pi*i/n)$
+
+```{julia}
+vals = 1:20
+
+out = [ℯ^((2π * 1im) / v) for v in vals]
+
+scatter(out)
+```
+
+If we tweak the range in `vals`, we can plot a circle
+
+Euler's formula gives s a representation for complex numbers that lie on the unit circle.
+
+### First Law of Exponentiation
+
+When powers multiply, their exponents add
+
+```{julia}
+ℯ^2 * ℯ^3 == ℯ^5
+```
+
+This rule helps use understand how to rotate a complex number *z*. We can write r = $|z|$ and $\theta = arg z$
+
+### Rotation by \tau radians
+
+if $\tau $ is a number of radians, and we want to rotate *z* by $\tau$, the rottaion should have the same absolute value as z (which, recall is the distance from the origin to the point), but its argument should be $\tau$ more than that of *z*, i.e. it should be $re^{(\theta + \tau)i}$
+
+The function that rotates z is $f(z) = ze^{\tau i}$
+
+```{julia}
+function radian_rotate(z::Complex, τ)
+    return z * ℯ^(τ * 1im)
+end
+
+out = radian_rotate.(S, π / 4)
+out2 = radian_rotate.(S, π / 2)
+
+scatter(S)
+scatter!(out)
+scatter!(out2)
+```
+
+Iterating through the above
+
+```{julia}
+τ = [π * i / 4 for i in 1:8]
+
+p = scatter(S)
+
+for i in τ
+    tmp = radian_rotate.(S, i)
+    p = scatter!(tmp)
+end
+
+p
+```
+
+
+## Playing with GF(2)
+
+See the book here (~p. 55). I'm not sure how critical this info will be later?
+
+## Review Questions
+
+1. Name 3 fields
+
+A: real numbers, complex numbers, and GF(2) -- zeros and ones
+
+2. What is a conjugate of a complex number? What does it have to do with the absolute value of a complex number?
+
+A: The conjugate of a complex number is the real part minus the imaginary part. The absolute value is like the hypotenuse if you think of the complex number as mapped to a Cartesian plane -- it's the distance from the origin to the point on that plane 
+
+3. How does complex number addition work?
+
+A: By adding real parts with real parts and imaginary parts with imaginary parts 
+
+4. How does complex number multiplication work?
+
+A: You can multiply a complex number by a scalar, and it distributes the multiplication across the real and imaginary terms
+
+5. How can translation be defined in terms of complex numbers?
+
+A: Translation is basically complex number addition
+
+6. How can scaling be defined in terms of complex numbers?
+
+A: Scaling is multiplying a complex number by a scalar
+
+7. How can rotation by 180 degrees be defined in terms of complex numbers?
+
+A: We can rotate by 180 degrees by multiplying a complex number by -1. This is bc the -1 is distributed to the real part and the imaginary part, so if we think of (real, imag) = (x, y), then -1*(real, imag) = (-x, -y), which is a 180 degree rotation
+
+8. How can rotation by 90 degrees be defined in terms of complex numbers?
+ 
+A: To rotate by 90 degrees, you have to multiply by **i**. This will convert (x, y) to (-y, x), which is a 90 degree rotation. All of this said, a better way to rotate stuff is probably via radians and Euler's formula (see notes above)
+
+9. How does addition in GF(2) work?
+
+A: Addition is modulo 2, so
+
+```{julia}
+mod(1 + 1, 2) == 0
+```
+
+and
+
+```{julia}
+mod(0 + 1, 2) == 1
+```
+
+10. How does multiplication in GF(2) work?
+
+A: multiplication works just like you'd expect. Recall that GF(2) is a field of 0s and 1s, so 1*1 = 1, but every other combiation is 0
