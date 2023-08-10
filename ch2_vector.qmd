@@ -2,3 +2,82 @@
 title: "Ch 2 - The Vector"
 jupyter: julia-1.9
 ---
+
+The entries of a vector must all be drawn from a single field (e.g. real, complex, GF(2))
+
+```{julia}
+using Plots
+```
+
+## Vectors are Functions
+
+For example, the vector [3.14, 2.71, -1, 2] is a function that maps the key to the value
+
+0 $\mapsto$ 3.14
+1 $\mapsto$ 2.71
+2 $\mapsto$ -1
+3 $\mapsto$ 2
+
+Another example. Assume we have a bag-of-words model, and each word is counted according to how many times it occurs in a document.
+
+We can represent this as:
+
+$WORDS \mapsto \mathbb{R}$ 
+
+*For a finite set D and a field $\mathbb{F}$, a D-vector over $\mathbb{F}$ is a function from D to $\mathbb{F}$*
+
+We can use $\mathbb{F}^D$ to denote the set of functions with domain D and co-domain $\mathbb{F}$
+
+## Representing Vectors
+
+Obviously, we can use Julia's vectors to represent vectors
+
+```{julia}
+a = collect(1:3)
+b = ["the", "rain", "in", "Spain", "falls", "mainly", "on", "the", "plain"]
+```
+
+But we can also use Dicts, which might be useful in a bag of words model
+
+```{julia}
+word_bag = Dict([(i, count(==(i), b)) for i in unique(b)])
+```
+
+## Sparsity
+
+A vector is sparse if most of its entries are zero. If no more than *k* entries are nonzero, we say a vector is *k-sparse*.
+
+## Representing Points as a Vector of Vectors
+
+```{julia}
+x = [[1, 2], [1, 3], [1, 4], [2, 2], [2, 5], [2, 7]]
+
+scatter(x)
+```
+
+Vectors can also, maybe obviously, represent points in higher-dimensional spaces, e.g. row vectors in a matrix
+
+## Vector Addition
+
+Vector addition works element-wise, like we'd expect
+
+```{julia}
+a = collect(1:3)
+b = collect(4:6)
+
+a + b
+```
+
+This is just a translation
+
+Here's an implementation for vector addition
+
+```{julia}
+function vector_add(x, y)
+    return [x[i] + y[i] for i ∈ eachindex(x)]
+end
+
+vector_add(a, b)
+```
+
+## RESUME AT 2.4.2
