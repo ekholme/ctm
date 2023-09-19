@@ -7,6 +7,10 @@ The entries of a vector must all be drawn from a single field (e.g. real, comple
 
 ```{julia}
 using Plots
+using Random
+using LinearAlgebra
+
+Random.seed!(0408)
 ```
 
 ## Vectors are Functions
@@ -80,4 +84,437 @@ end
 vector_add(a, b)
 ```
 
-## RESUME AT 2.4.2
+Vector addition is both associative and commutative
+
+## Vectors as arrows
+
+*n*-vectors over $\mathbb{R}$ can by visualized as arrows in $\mathbb{R}^n$, e.g.
+
+## Scalar Vector Multiplication {#sec-sv-mult}
+
+Multipling a vector *v* by a scalar $\alpha$ is defined as multipling each entry of *v* by $\alpha$
+
+```{julia}
+α = 2
+v = collect(1:5)
+
+α * v
+```
+
+As in non-vector math, multiplication has precedence over addition, so in $\alpha[1, 2, 3] + [4, 5, 6]$, we multiply the first vector by alpha before adding the second vector. But parentheses can change this.
+
+Multiplication is also associative, e.g.
+
+$(\alpha\beta)*v == \alpha(\beta*v)$
+
+We can get a line segment between the origin and *v* by scaling a single vector infinitely many times (or many times, in approximation)
+
+```{julia}
+x = 3
+y = 2
+
+r = 0.1:0.1:1
+
+scatter(x .* r, y .* r)
+```
+
+Or to get more granular
+
+```{julia}
+x = 3
+y = 2
+
+r = 0.1:0.01:1
+
+scatter(x .* r, y .* r)
+```
+
+## Combining Vector Addition and Scalar Multiplication
+
+Scaling where $0 \le \alpha \le 1$ gives a line segment from the origin to *v*. But we can arbitrarily create lines and line segments by translating (adding) and scaling with arbitrary values
+
+that is:
+
+$${v + \alpha*u : \alpha \in \mathbb{R}}$$
+
+**Exercise 2.6.1**
+
+Given u = [2, 3] and v = [5, 7] in $\mathbb{R}^2$, what is the point w such that the origin-to-w line segment can be translated to the u-to-v line segment? And what is the translation vector that is applied to both endpoints?
+
+```{julia}
+#this just requires translation
+u = [2, 3]
+v = [5, 7]
+
+w = v .- u
+#and the translation vector is just u
+```
+
+**Exercise 2.6.2**
+Given a pair of point, u = [1, 4] and v = [6, 3] in $\mathbb{R}^2$, write a mathematical expression giving the set of points making up the line segment between the two points:
+
+{$[1, 4] + \alpha * [5, -1] : \alpha \in \mathbb{R}, 0 \le \alpha \le 1$}
+
+### Distributive law for scalar-vector multiplication and vector addition
+
+$\alpha(u + v) == \alpha u + \alpha v$
+
+### Convex Combinations
+
+We can use convex combinations to express the line segment between points *u* and *v* by scaling both endpoints via the equation:
+
+{$$\alpha\bf u + \beta\bf v : \alpha,\beta \in \mathbb{R}, \alpha,\beta \ge 0, \alpha + \beta = 1$$}
+
+```{julia}
+u = [2, 3]
+v = [5, 7]
+
+α = collect(0:0.05:1)
+β = 1 .- α
+
+params = collect(zip(α, β))
+
+r = [params[i][1] .* u + params[i][2] .* v for i in eachindex(params)]
+
+m = hcat(r...)
+
+scatter(m[1, :], m[2, :])
+```
+
+We can use this same approach to crossfade two images together!
+
+### Affine Combinations {#sec-affine}
+
+And if we remove the constraint that $\alpha + \beta = 1$ from the previous equation, we get a line rather than a line segment
+
+```{julia}
+u = [2, 3]
+v = [5, 7]
+
+α = collect(0:0.5:10)
+β = 1 .- α
+
+params = collect(zip(α, β))
+
+r = [params[i][1] .* u + params[i][2] .* v for i in eachindex(params)]
+
+m = hcat(r...)
+
+scatter(m[1, :], m[2, :])
+
+```
+
+## Dictionary-Based Representations of Vectors
+
+We can think of vectors as a function from some domain, D, to a field. We can create a struct to solidify this idea
+
+```{julia}
+mutable struct eeVector
+    f::Dict{Any,Any}
+    D::Vector{Any}
+end
+
+x = eeVector(Dict("A" => 1), ["A", "B", "C"])
+
+for d in x.D
+    if d in keys(x.f)
+        println(x.f[d])
+    end
+end
+```
+
+We can also opt to write our own scalar multiplication if we want
+
+```{julia}
+y = eeVector(Dict("A" => 1.0, "B" => 1.5, "D" => 4.0), ["A", "B", "C", "D"])
+
+function scalar_mul(v::eeVector, α::Real)
+    r = α .* values(v.f)
+    d = Dict(zip(keys(v.f), r))
+    v.f = d
+    return v
+end
+
+z = scalar_mul(y, 2)
+```
+
+And we could do the same with addition
+
+### Vector Subtraction
+
+Vector subtraction is the inverse of vector addition. It works just like you'd expect it to.
+
+## Vectors over GF(2)
+
+Vector addition with GF(2) provides a way to encrypt data. Suppose Alice needs to send a ten-bit plaintext **p** to Bob. If Alice and Bob randomly choose a 10-vector **k**, then Alice can createa a cyphertext **c** that is $c = p + k$. Bob can then decrypt this via $p = c - k$. Since $1 + 1 = 0$ in GF(2), it's also true that $p = c + k$. Either way, Bob can decrypt the message.
+
+There's some interesting stuff here about the Light's Out game, but I'll defer on taking real notes on it until the solving algorithm is presented later (in Ch 7, apparently).
+
+## Dot Product
+
+For two *D*-vectors, *u* and *v*, the dot product is the sum of the product of corresponding entries
+
+```{julia}
+u = [1, 2, 3]
+v = [4, 5, 6]
+
+dot_prod = sum(u .* v)
+dot_prod
+```
+
+Note that this returns a scalar, not a vector.
+
+### Measuring similarity
+
+dot-products can be used to measure the similarity between vectors over $\mathbb{R}$
+
+For instance, if we code senators' voting records as [1, -1, 0] for [Aye, Nay, Abstain], then we can take the dot product of their voting records to get a measure of similarity (positive values are more similar, negative values are dissimilar)
+
+We can also use the same technique to compare the amplitude of audio segments to see if they're similar.
+
+If the audio clips are different lengths, we can still compare them, but we need to iterate over the length of the longer clip to compare different overlaps
+
+**Quiz 2.9.15**
+
+Write a function, dot_product_list(needle, haystack) that takes a short vector (needle) and a long vector (haystack) and returns a vector of len(haystack) - len(needle) such that each entry of the output list equals the dot-product of the needle with the equal-length sublist of haystack starting at position i
+
+```{julia}
+x = rand(10)
+y = rand(20)
+
+function dot_product_list(needle::Vector{Float64}, haystack::Vector{Float64})
+    l_n = length(needle)
+    r = [needle ⋅ haystack[i:i+l_n-1] for i ∈ 1:length(haystack)-l_n]
+    return r
+end
+
+z = dot_product_list(x, y)
+
+#and we can see what the best starting index is
+findmax(z)
+```
+
+### Properties of the Dot Product
+
+dot products are commutative
+
+```{julia}
+sum(u .* v) == sum(v .* u)
+```
+
+multiplying one vector of a dot product by a scalar is the same as multiplying the resultant dot product by a scalar, e.g.
+
+$$ \alpha(u \cdot v) == (\alpha * u) \cdot v $$
+
+```{julia}
+2 * (sum(u .* v)) == sum((2 * u) .* v)
+```
+
+## Solving a triangular system of linear equations {#sec-triangular}
+
+an upper-triangular system of linear equations has the form:
+
+$$A_{n, n} = 
+\begin{pmatrix}
+a_{1,1} & a_{1,2} & \cdots & a_{1,n} \\
+0 & a_{2,2} & \cdots & a_{2,n} \\
+\vdots  & \vdots  & \ddots & \vdots  \\
+0 & 0 & \cdots & a_{n,n} 
+\end{pmatrix}
+
+\cdot 
+\begin{bmatrix}
+\bf_x \\
+\bf_x \\
+\vdots \\
+\bf_x
+\end{bmatrix}
+
+=
+
+\begin{bmatrix}
+\beta_1 \\
+\beta_2 \\
+\vdots \\
+\beta_n
+\end{bmatrix}
+
+$$
+
+*note for the above -- each x is its own vector, and we're not doing typical matrix-vector multiplication -- i just had to lay out the x's as a vector to get the columnar alignment*
+
+We can solve the previous system of equations by backward substitution
+
+```{julia}
+r = [[2, 4, 8], [0, 7, 11], [0, 0, 2]]
+
+b = [-1, 5, 9]
+
+function triangular_solve(rows, beta)
+    n = length(b)
+    x = Vector{Float64}(undef, n)
+
+    for i ∈ n:-1:1
+        x[i] = (b[i] - (sum(r[i] .* x))) / r[i][i]
+    end
+
+    return x
+end
+```
+
+```{julia}
+ triangular_solve(r, b)
+```
+
+
+*sort of an aside, but I'm not going to do a bunch of the stuff that involves defining my own vector, matrix, etc classes*
+
+## Voting Records Lab
+
+Here we're comparing voting records to see how similar they are. In this chunk, I'll read the data in and format it appropriately.
+
+```{julia}
+f = open("./data/voting_record_dump109.txt", "r")
+
+vr = readlines(f)
+
+vr2 = split.(vr)
+
+records = [vr2[i][4:end] for i in eachindex(vr2)]
+records_parsed = [parse.(Int, records[i]) for i in eachindex(records)]
+
+nms = [vr2[i][1] for i in eachindex(vr2)]
+
+mutable struct Votes
+    Name::String
+    Record::Vector{Int64}
+end
+
+record_vec = Vector{Votes}(undef, length(nms))
+
+for i ∈ eachindex(records)
+    record_vec[i] = Votes(nms[i], records_parsed[i])
+end
+```
+
+This gives us a Vector of Votes, which is a special type we just created.
+
+Next, let's write a function that allows us to compare the voting records of two representatives
+
+```{julia}
+function compare_records(sen_a::String, sen_b::String, records::Vector{Votes})
+    sens = Vector{String}(undef, length(records))
+
+    [sens[i] = records[i].Name for i in eachindex(records)]
+
+    #get indices in records for senators a and b
+    ind_a = findfirst(x -> x == sen_a, sens)
+    ind_b = findfirst(x -> x == sen_b, sens)
+
+    #extract voting records of senators a and b
+    va = records[ind_a].Record
+    vb = records[ind_b].Record
+
+    #get similarity via dot product
+    ret = sum(va .* vb)
+
+    return ret
+end
+```
+
+```{julia}
+compare_records("Allen", "Warner", record_vec)
+```
+
+We could also write a function to find whichever senator is the most similar to a given senator
+
+```{julia}
+function most_similar(senator::String, records::Vector{Votes})
+    sens = Vector{String}(undef, length(records))
+
+    [sens[i] = records[i].Name for i in eachindex(records)]
+
+    #get the index of this senator
+    ind_sen = findfirst(x -> x == senator, sens)
+
+    res = Vector{Union{Int64,Missing}}(undef, length(records))
+
+    for i ∈ eachindex(records)
+        #ensure that we don't compare someone to themselves
+        if i == ind_sen
+            res[i] = missing
+        else
+            res[i] = sum(records[ind_sen].Record .* records[i].Record)
+        end
+    end
+
+    m = findmax(skipmissing(res))[2]
+
+    ret = sens[m]
+
+    return ret
+end
+```
+
+```{julia}
+most_similar("Alexander", record_vec) 
+```
+
+## Review Questions
+
+**Q: What is vector addition?**
+
+Vector addition is, uh, adding two vectors together element-wise.
+
+**Q: what is the geometric interpretation of vector addition?**
+
+To add two vectors, you would place the tail of the 2nd vector at the head of the first vector. The head of the 2nd vector would provide the endpoint for a vector beginning at the origin.
+
+**Q: what is scalar-vector multiplication?**
+
+Scalar-vector multiplication entails multiplying each element of a vector by a scalar. The resulting vector will have the same number of elements as the input vector, but scaled by a factor of the scalar.
+
+**Q: what is the distributive property that involves scalar-vector multiplication but not vector addition?**
+
+
+**Q: what is the distributive property that involves both scalar-vector multiplication and vector addition?**
+
+I'm not sure I really understand what these questions are asking?
+
+**Q: how is scalar-vector multiplication used to represent a line through the origin and a given point?**
+
+We can scale a vector infinitely many times to create a line through the origin and the vector's (original) endpoint. See @sec-sv-mult
+
+
+**Q: how are scalar-vector multiplication and vector addition used to represent a line through a pair of given points?**
+
+The same as the above, but we also introduce addition to move the point off of the origin initially. See @sec-affine
+
+**Q: what is the dot-product?**
+
+The dot-product is the sum of elementwise products of two vectors (that have the same length). So the dot-product of [1, 2] and [3, 4] = 1x3 + 2x4 = 11
+
+**Q: what is the homogeneity property that relates dot-product to scalar-vector multiplication?**
+
+
+**Q: what is the distributive property that relates dot-product to vector addition?**
+
+Again, I'm not sure what this is asking?
+
+**Q: what is a linear equation (expressed using dot product)?**
+
+A linear equation is expressed as $a \cdot x = \beta$ where a is a vector, $\beta$ is a scalar, and x is a vector variable
+
+**Q: What is a linear sytem?**
+
+A linear system is a collection of equations such as $$ a\_1 \cdot x = \beta_, a\_2 \cdot x = \beta_2, ...1$$
+
+where x is a vector variable. A solution is a vector $x\hat$ that satisfies all equations.
+
+**Q: what is an upper-triangular linear system?**
+
+It's a linear system where the lower triangle in a matrix is filled with 0s. See @sec-triangular
+
+**Q: how can one solve an upper-triangular linear system?**
+
+Backwards substitution. Start with the equation that has a single non-zero element, then move up in rows in the matrix, solving each row iteratively and plugging the solution into the preceding row. See @sec-triangular
